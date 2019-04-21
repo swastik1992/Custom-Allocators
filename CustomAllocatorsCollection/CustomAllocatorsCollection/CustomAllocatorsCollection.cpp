@@ -6,8 +6,7 @@
 //	Stack Allocator					[]
 //  Double Ended Stack Allocator	[]
 //	Pool Allocator					[]
-//	Free List Allocator				[]
-//	Aligned Allocator				[]
+//	List Allocator				    []
 //	Single Buffered Allocator		[]
 //	Double Buffered Allocator		[]
 /////////////////////////////////////////
@@ -15,10 +14,16 @@
 
 #include "pch.h"
 #include <iostream>
+#include "LinkedListAllocator.h"
 
 int main()
 {
-    std::cout << "Hello World!\n"; 
+	LinkedListAllocator* listAllocator = new LinkedListAllocator(1e8);
+	listAllocator->InitializeAllocator();
+
+	listAllocator->CMalloc(1024, 8);
+
+	delete listAllocator;
 }
 
 
