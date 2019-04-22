@@ -94,7 +94,8 @@ void LinkedListAllocator::InitializeAllocator()
 
 	usedSize = 0;
 	peakSize = 0;
-	List::Node<size_t>* firstElem = (List::Node<size_t>*) startLocation;
+	List::Node<AvailableMemoryHeader>* firstElem = (List::Node<AvailableMemoryHeader>*) startLocation;
+	firstElem->data.size = allocationSize;
 	firstElem->next = nullptr;
 	
 	availableMemories.head = nullptr;
@@ -108,8 +109,8 @@ void* LinkedListAllocator::CMalloc(const size_t size, const size_t alignment)
 	//We would need to allocate memory for desired size +  padding size to make sure alignment is being followed 
 	
 	//iterate through free memory list to find the best available memory for required size.
-	List::Node<size_t>* bestNode = availableMemories.head;
-	List::Node<size_t>* prevNode = nullptr;
+	List::Node<AvailableMemoryHeader>* bestNode = availableMemories.head;
+	List::Node<AvailableMemoryHeader>* prevNode = nullptr;
 	size_t padding;
 
 	while (bestNode != nullptr)
@@ -133,7 +134,7 @@ void* LinkedListAllocator::CMalloc(const size_t size, const size_t alignment)
 			}
 		}
 
-		if (bestNode->data >= padding + size) //check if current node can contain required allocation size.
+		if (bestNode->data.size >= padding + size) //check if current node can contain required allocation size.
 		{
 			//Log ("[LinkedList Allocation] Best node for allocating memory for header size: " + headerSize );
 
@@ -152,13 +153,13 @@ void* LinkedListAllocator::CMalloc(const size_t size, const size_t alignment)
 		return nullptr;
 	}
 
-	if (bestNode->data > (size + padding))
+	if (bestNode->data.size > (size + padding))
 	{
-		size_t unusedMemory = bestNode->data - (size + padding);
+		size_t unusedMemory = bestNode->data.size - (size + padding);
 
 		//need to free unused memory from best node and add it as a new node in available memory list.
-		List::Node<size_t>* unusedMemNode = (List::Node<size_t>*) (bestNode->data + (size + padding));
-		unusedMemNode->data = (size_t)unusedMemory;
+		List::Node<AvailableMemoryHeader>* unusedMemNode = (List::Node<AvailableMemoryHeader>*) (bestNode->data.size + (size + padding));
+		unusedMemNode->data.size = (size_t)unusedMemory;
 		availableMemories.Add(unusedMemNode, bestNode);
 
 		//Log ("[LinkedList Allocation] Total unused memory for alignment: " + unusedMemory);

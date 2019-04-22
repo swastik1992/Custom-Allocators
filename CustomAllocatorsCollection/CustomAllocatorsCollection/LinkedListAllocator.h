@@ -33,6 +33,11 @@ struct AllocationHeader
 	char padding;
 };
 
+struct AvailableMemoryHeader
+{
+	size_t size;
+};
+
 class LinkedListAllocator
 {
 	
@@ -51,7 +56,7 @@ private:
 
 	void* startLocation;
 
-	List::LinkedList<size_t> availableMemories;
+	List::LinkedList<AvailableMemoryHeader> availableMemories;
 
 	size_t allocationSize;
 
