@@ -21,7 +21,11 @@ int main()
 	LinkedListAllocator* listAllocator = new LinkedListAllocator(1e8);
 	listAllocator->InitializeAllocator();
 
-	listAllocator->CMalloc(1024, 8);
+	void* ptr = listAllocator->CMalloc(1014, 8);
+
+	Log("---------------------------------------------------------------");
+
+	listAllocator->CFree(ptr);
 
 	delete listAllocator;
 }

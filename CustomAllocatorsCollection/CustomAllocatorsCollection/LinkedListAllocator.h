@@ -30,7 +30,7 @@ namespace List
 struct AllocationHeader
 {
 	size_t size;
-	char padding;
+	size_t padding;
 };
 
 struct AvailableMemoryHeader
