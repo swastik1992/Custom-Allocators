@@ -72,7 +72,7 @@ LinkedListAllocator::LinkedListAllocator(const size_t size)
 {
 	allocationSize = size;
 
-	Log ("[LinkedList Allocation] Allocation size :" <<  allocationSize);
+	Log ("[LinkedList Allocation] Allocation size :" <<  allocationSize << std::endl);
 }
 
 LinkedListAllocator::~LinkedListAllocator()
@@ -101,12 +101,15 @@ void LinkedListAllocator::InitializeAllocator()
 	availableMemories.head = nullptr;
 	availableMemories.Add(firstElem, nullptr);
 
-	Log ("[LinkedList Allocation] InitializeAllocator() Allocating memory of size :" << allocationSize);
+	Log ("[LinkedList Allocation] InitializeAllocator() Allocating memory of size :" << allocationSize << std::endl);
 }
 
 void* LinkedListAllocator::CMalloc(const size_t size, const size_t alignment)
 {
-	Log("[LinkedList Allocation] CMalloc() for size: " << size << " with alignment: " << alignment);
+	Log("[LinkedList Allocation] Memory left in the free list before allocation :");
+	DebugPrintAvailableList();
+
+	Log(std::endl << "[LinkedList Allocation] CMalloc() for size: " << size << " with alignment: " << alignment);
 
 	//We would need to allocate memory for desired size +  padding size to make sure alignment is being followed 
 	
@@ -160,8 +163,9 @@ void* LinkedListAllocator::CMalloc(const size_t size, const size_t alignment)
 		size_t unusedMemory = bestNode->data.size - (size + padding);
 
 		//need to free unused memory from best node and add it as a new node in available memory list.
-		List::Node<AvailableMemoryHeader>* unusedMemNode = (List::Node<AvailableMemoryHeader>*) (bestNode->data.size + (size + padding));
+		List::Node<AvailableMemoryHeader>* unusedMemNode = (List::Node<AvailableMemoryHeader>*) ((size_t)bestNode + (size + padding));
 		unusedMemNode->data.size = (size_t)unusedMemory;
+
 		availableMemories.Add(unusedMemNode, bestNode);
 
 		Log ("[LinkedList Allocation] CMalloc() Total remaining memory left from block after (allocation size + padding) : " << unusedMemory);
@@ -189,15 +193,22 @@ void* LinkedListAllocator::CMalloc(const size_t size, const size_t alignment)
 
 	peakSize = std::max(peakSize, usedSize);
 
-	Log ("[LinkedList Allocation] CMalloc() Total used memory: " << usedSize);
+	Log ("[LinkedList Allocation] CMalloc() Total used memory: " << usedSize << std::endl);
 	
+	Log("[LinkedList Allocation] Memory left in the free list after allocation :");
+	DebugPrintAvailableList();
+
 	return (void*)userMemAddr;
 }
 
 void LinkedListAllocator::CFree(void* memory)
 {
+	Log("[LinkedList Allocation] Memory left in the free list before deallocation :");
+	DebugPrintAvailableList();
+
+
 	size_t memoryAddrs = (size_t)memory;
-	Log("[LinkedList Allocation] CFree() Location of address to be freed: " << memoryAddrs);
+	Log(std::endl <<"[LinkedList Allocation] CFree() Location of address to be freed: " << memoryAddrs);
 
 	size_t headerAddrs = memoryAddrs - sizeof(AllocationHeader);
 	Log("[LinkedList Allocation] CFree() Size of header: " << sizeof(AllocationHeader));
@@ -206,7 +217,6 @@ void LinkedListAllocator::CFree(void* memory)
 	AllocationHeader * allocationHeader{ (AllocationHeader *)headerAddrs };
 	Log("[LinkedList Allocation] CFree() Size of block to be freed: " << allocationHeader->size);
 	Log("[LinkedList Allocation] CFree() Size of padding : " << (size_t)allocationHeader->padding);
-
 
 	List::Node<AvailableMemoryHeader>* node = (List::Node<AvailableMemoryHeader>*)(headerAddrs - allocationHeader->padding);
 	node->data.size = allocationHeader->size;
@@ -228,11 +238,40 @@ void LinkedListAllocator::CFree(void* memory)
 		iterator = iterator->next;
 	}
 
-	//@todo function to debug print free list.
-	//@todo merge any contiguous memory if possible.
-	//@todo read me. 
-
 	usedSize -= node->data.size;
 	Log("[LinkedList Allocation] CMalloc() Total used memory: " << usedSize);
+	
+	Log(std::endl << "[LinkedList Allocation] Memory left in the free list after deallocation :");
+	DebugPrintAvailableList();
+
+	if (node->next != nullptr && (size_t)node + node->data.size == (size_t)node->next)
+	{
+		node->data.size += node->next->data.size;
+		availableMemories.Delete(node->next, node);
+	}
+
+	if (prevNode != nullptr && (size_t)prevNode + prevNode->data.size == (size_t)node)
+	{
+		prevNode->data.size += node->data.size;
+		availableMemories.Delete(node, prevNode);
+	}
+	
+	Log(std::endl << "[LinkedList Allocation] Memory left in the free list after merging contigous memory :");
+	DebugPrintAvailableList();
 }
+
+void LinkedListAllocator::DebugPrintAvailableList()
+{
+	List::Node<AvailableMemoryHeader>* it = availableMemories.head;
+	int index = 0;
+	while (it != nullptr)
+	{
+		Log("Memory at index: " << index << " , Size of the free memory: " << it->data.size << ", Location of memory: " << (size_t)it);
+		index++;
+
+		it = it->next;
+	}
+}
+
+
 

@@ -18,7 +18,7 @@
 
 int main()
 {
-	LinkedListAllocator* listAllocator = new LinkedListAllocator(1e8);
+	LinkedListAllocator* listAllocator = new LinkedListAllocator(100000000);
 	listAllocator->InitializeAllocator();
 
 	void* ptr = listAllocator->CMalloc(1014, 8);

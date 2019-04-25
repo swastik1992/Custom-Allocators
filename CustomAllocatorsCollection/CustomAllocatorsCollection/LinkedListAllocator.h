@@ -63,5 +63,7 @@ private:
 	size_t usedSize;
 
 	size_t peakSize;
+
+	void DebugPrintAvailableList();
 };
 
