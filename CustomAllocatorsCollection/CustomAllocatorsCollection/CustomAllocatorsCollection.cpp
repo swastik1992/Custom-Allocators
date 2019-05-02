@@ -18,6 +18,8 @@
 
 int main()
 {
+	std::cout <<  std::endl;
+
 	LinkedListAllocator* listAllocator = new LinkedListAllocator(100000000);
 	listAllocator->InitializeAllocator();
 
